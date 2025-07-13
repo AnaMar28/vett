@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malla Interactiva Medicina Veterinaria</title>
+  <style>
+    :root {
+      --pastel1: #ffcc99;
+      --pastel2: #ffcccc;
+      --pastel3: #ff99cc;
+      --pastel4: #ffccff;
+      --pastel5: #cc99ff;
+      --pastel6: #ccccff;
+      --pastel7: #99ccff;
+      --pastel8: #ccffff;
+      --pastel9: #99ffcc;
+      --pastel10: #ccffcc;
+      --linea-completada: #9c27b0;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1579017984851-d173d04f8c7d?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #ffffff;
+      text-shadow: 1px 1px 3px #000;
+      margin-bottom: 30px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .wrapper {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      overflow-x: auto;
+    }
+    .semestre {
+      min-width: 220px;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+      color: #333;
+      background-blend-mode: multiply;
+      position: relative;
+    }
+    .semestre:nth-child(1) { background: var(--pastel1); }
+    .semestre:nth-child(2) { background: var(--pastel2); }
+    .semestre:nth-child(3) { background: var(--pastel3); }
+    .semestre:nth-child(4) { background: var(--pastel4); }
+    .semestre:nth-child(5) { background: var(--pastel5); }
+    .semestre:nth-child(6) { background: var(--pastel6); }
+    .semestre:nth-child(7) { background: var(--pastel7); }
+    .semestre:nth-child(8) { background: var(--pastel8); }
+    .semestre:nth-child(9) { background: var(--pastel9); }
+    .semestre:nth-child(10) { background: var(--pastel10); }
+
+    .semestre h2 {
+      font-size: 1rem;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #37474f;
+    }
+    .semestre button {
+      display: block;
+      margin: 0 auto 10px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #ffffffcc;
+      cursor: pointer;
+    }
+    .materia {
+      margin: 6px 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.6);
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+    .materia:hover {
+      background: rgba(0,0,0,0.1);
+    }
+    .materia.bloqueada {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .materia.completada::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      border: 2px solid var(--linea-completada);
+      border-radius: 8px;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Malla Interactiva - Medicina Veterinaria</h1>
+  <div class="controls" style="text-align: center; margin-bottom: 30px;">
+    <button onclick="marcarTodo()">✅ Marcar todo</button>
+    <button onclick="reiniciarTodo()">🔄 Reiniciar todo</button>
+  </div>
+
+  <div class="container">
+    <div class="wrapper" id="fila1"></div>
+    <div class="wrapper" id="fila2"></div>
+  </div>
+
+  <script>
+    const materias = {};
+    const fila1 = document.getElementById('fila1');
+    const fila2 = document.getElementById('fila2');
+
+    for (let i = 1; i <= 10; i++) {
+      const div = document.createElement('div');
+      div.className = 'semestre';
+      div.innerHTML = `<h2>Semestre ${i}</h2><button onclick="marcarSemestre(this)">✅ Marcar semestre</button>`;
+      const contenedor = i <= 5 ? fila1 : fila2;
+      contenedor.appendChild(div);
+      materias[i] = div;
+    }
+
+    function crearMateria(codigo, nombre, prereq = []) {
+      const semestre = parseInt(codigo.split('.')[0]);
+      const mat = document.createElement('div');
+      mat.className = 'materia';
+      mat.textContent = nombre;
+      mat.dataset.clave = codigo;
+      if (prereq.length) mat.classList.add('bloqueada');
+      mat.dataset.prereq = JSON.stringify(prereq);
+      mat.addEventListener('click', () => {
+        if (!mat.classList.contains('bloqueada')) {
+          mat.classList.toggle('completada');
+          verificarBloqueos();
+        }
+      });
+      materias[semestre].appendChild(mat);
+    }
+
+    function verificarBloqueos() {
+      document.querySelectorAll('.materia').forEach(item => {
+        const prereq = JSON.parse(item.dataset.prereq || '[]');
+        const habilitada = prereq.every(pr => document.querySelector(`.materia[data-clave="${pr}"]`)?.classList.contains('completada'));
+        item.classList.toggle('bloqueada', prereq.length && !habilitada);
+      });
+    }
+
+    function marcarTodo() {
+      document.querySelectorAll('.materia:not(.bloqueada)').forEach(m => m.classList.add('completada'));
+      verificarBloqueos();
+    }
+
+    function reiniciarTodo() {
+      document.querySelectorAll('.materia').forEach(m => m.classList.remove('completada'));
+      verificarBloqueos();
+    }
+
+    function marcarSemestre(btn) {
+      const materias = btn.parentElement.querySelectorAll('.materia:not(.bloqueada)');
+      materias.forEach(m => m.classList.add('completada'));
+      verificarBloqueos();
+    }
+  </script>
+</body>
+</html>
